@@ -16,7 +16,7 @@ npm run dev
 
 ## GitHub Pages
 
-Die App ist fuer GitHub Pages als Repository-Seite unter `/Workflow/` konfiguriert.
+Die App ist fuer GitHub Pages als Repository-Seite unter `/WorkFlow/` konfiguriert.
 
 1. In GitHub unter `Settings > Pages` als Source `GitHub Actions` auswaehlen.
 2. Unter `Settings > Secrets and variables > Actions > Variables` eine Repository Variable anlegen:
@@ -25,7 +25,7 @@ Die App ist fuer GitHub Pages als Repository-Seite unter `/Workflow/` konfigurie
    `https://<github-user>.github.io`
 4. Push auf `main` startet `.github/workflows/deploy.yml` und deployed `dist/`.
 
-Wenn das Repository nicht `Workflow` heisst oder eine eigene Domain genutzt wird, muss `base` in `vite.config.ts` passend geaendert werden.
+Wenn das Repository nicht `WorkFlow` heisst oder eine eigene Domain genutzt wird, muss `base` in `vite.config.ts` passend geaendert werden.
 
 ## Funktionen
 

@@ -2,7 +2,7 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 export default defineConfig({
-    base: "/Workflow/",
+    base: "/WorkFlow/",
     plugins: [
         react(),
         VitePWA({
@@ -16,8 +16,8 @@ export default defineConfig({
                 background_color: "#f8fafc",
                 display: "standalone",
                 lang: "de",
-                scope: "/Workflow/",
-                start_url: "/Workflow/",
+                scope: "/WorkFlow/",
+                start_url: "/WorkFlow/",
                 icons: [
                     {
                         src: "icons/icon-192.png",
@@ -39,7 +39,7 @@ export default defineConfig({
             },
             workbox: {
                 globPatterns: ["**/*.{js,css,html,png,svg,ico,woff2}"],
-                navigateFallback: "/Workflow/index.html"
+                navigateFallback: "/WorkFlow/index.html"
             }
         })
     ],
