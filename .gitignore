@@ -1,5 +1,6 @@
-node_modules/
+node_modules
+dist
 .env
-dist/
-build/
-.DS_Store
+.env.local
+*.tsbuildinfo
+vite-dev*.log
