@@ -34,10 +34,8 @@ export function TaskSection({
   const openTasks = visibleTasks.filter((task) => task.status !== "completed");
   const completedTasks = visibleTasks.filter((task) => task.status === "completed");
   const selectedListTitle = taskLists.find((list) => list.id === selectedTaskListId)?.title ?? "Alle Aufgaben";
-  const completionRate = visibleTasks.length ? Math.round((completedTasks.length / visibleTasks.length) * 100) : 0;
-
   return (
-    <div className="thin-scrollbar grid h-full grid-cols-1 overflow-y-auto bg-background pb-20 lg:pb-0 xl:grid-cols-[1fr_360px]">
+    <div className="thin-scrollbar h-full overflow-y-auto bg-background pb-20 lg:pb-0">
       <section className="flex min-h-0 flex-col bg-white">
         <div className="border-b border-line px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -127,36 +125,6 @@ export function TaskSection({
           )}
         </div>
       </section>
-
-      <aside className="hidden border-l border-line bg-background p-5 xl:block">
-        <section className="rounded-xl border border-line bg-white p-5 shadow-panel">
-          <div className="mb-4 flex items-start justify-between">
-            <h3 className="text-lg font-semibold">Task Insights</h3>
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-container text-sm font-semibold text-muted">
-              i
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted">Daily Progress</span>
-            <span className="text-sm font-bold text-primary-dark">{completionRate}%</span>
-          </div>
-          <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-container">
-            <div className="h-full bg-primary-dark" style={{ width: `${completionRate}%` }} />
-          </div>
-          <p className="mt-4 text-sm leading-6 text-muted">
-            Du hast {completedTasks.length} von {visibleTasks.length} Aufgaben in dieser Liste erledigt.
-          </p>
-        </section>
-
-        <section className="mt-5 rounded-xl border border-blue-100 bg-blue-50 p-5 text-blue-950 shadow-panel">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary-dark">Focus Mode</p>
-          <h3 className="mt-2 text-lg font-semibold">25 Minuten Fokus</h3>
-          <p className="mt-2 text-sm leading-6">Arbeite zuerst an deiner wichtigsten offenen Aufgabe.</p>
-          <button className="mt-4 h-10 w-full rounded-lg bg-primary-dark font-semibold text-white hover:bg-primary-blue">
-            Start Pomodoro
-          </button>
-        </section>
-      </aside>
     </div>
   );
 }
