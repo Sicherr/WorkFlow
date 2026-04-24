@@ -1,5 +1,5 @@
 import { useRef, useState, type PointerEvent } from "react";
-import { CalendarPlus, Edit3, MapPin } from "lucide-react";
+import { CalendarPlus, ChevronLeft, ChevronRight, Edit3, MapPin } from "lucide-react";
 import type { GoogleCalendarListEntry } from "../types/google";
 import type { PlanningEvent } from "../types/planning";
 import {
@@ -25,12 +25,16 @@ interface CalendarSectionProps {
   totalEventCount: number;
   visibleCalendarCount: number;
   calendarCount: number;
+  onPreviousWeek: () => void;
+  onNextWeek: () => void;
+  onToday: () => void;
   onShowAllCalendars: () => void;
   onCalendarVisibilityChange: (calendarId: string) => void;
   isReadOnly: boolean;
   onAddEvent: () => void;
   onEditEvent: (event: PlanningEvent) => void;
   onMoveEvent: (event: PlanningEvent, move: CalendarEventMove) => void;
+  onOpenSidebar: () => void;
 }
 
 interface DragState {
@@ -63,12 +67,16 @@ export function CalendarSection({
   totalEventCount,
   visibleCalendarCount,
   calendarCount,
+  onPreviousWeek,
+  onNextWeek,
+  onToday,
   onShowAllCalendars,
   onCalendarVisibilityChange,
   isReadOnly,
   onAddEvent,
   onEditEvent,
-  onMoveEvent
+  onMoveEvent,
+  onOpenSidebar
 }: CalendarSectionProps) {
   const days = getWeekDays(weekStart);
   const activeCalendarIds = visibleCalendarIds ?? calendars.map((calendar) => calendar.id);
@@ -163,14 +171,52 @@ export function CalendarSection({
   return (
     <section className="relative flex h-full min-w-0 flex-col bg-white pb-20 lg:pb-0">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-4 sm:px-6 sm:py-5">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold uppercase tracking-[0.08em] text-primary-dark">Calendar</p>
-          <h2 className="mt-1 text-2xl font-semibold leading-8 text-primary-dark sm:text-[28px] sm:leading-9">
+        <div className="flex min-w-0 items-start gap-3">
+          <button
+            type="button"
+            onClick={onOpenSidebar}
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-outline-soft bg-white text-primary-dark hover:bg-surface-low lg:hidden"
+            aria-label="Navigation oeffnen"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold uppercase tracking-[0.08em] text-primary-dark">Calendar</p>
+            <h2 className="mt-1 text-2xl font-semibold leading-8 text-primary-dark sm:text-[28px] sm:leading-9">
+              {formatDayLabel(days[0])} - {formatDayLabel(days[6])}
+            </h2>
+            <p className="mt-1 text-sm text-muted">
+              {events.length} von {totalEventCount} Terminen sichtbar Â· {visibleCalendarCount}/{calendarCount} Kalender aktiv
+            </p>
+          </div>
+        </div>
+        <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto">
+          <button
+            type="button"
+            onClick={onPreviousWeek}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-outline-soft bg-white hover:bg-surface-low"
+            aria-label="Vorherige Woche"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <div className="flex h-10 min-w-0 flex-1 items-center justify-center rounded-lg border border-outline-soft bg-white px-3 text-sm font-medium sm:min-w-44 sm:flex-none sm:text-base">
             {formatDayLabel(days[0])} - {formatDayLabel(days[6])}
-          </h2>
-          <p className="mt-1 text-sm text-muted">
-            {events.length} von {totalEventCount} Terminen sichtbar · {visibleCalendarCount}/{calendarCount} Kalender aktiv
-          </p>
+          </div>
+          <button
+            type="button"
+            onClick={onNextWeek}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-outline-soft bg-white hover:bg-surface-low"
+            aria-label="Nächste Woche"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={onToday}
+            className="h-10 rounded-lg bg-primary-dark px-4 font-medium text-white hover:bg-primary-blue"
+          >
+            Heute
+          </button>
         </div>
         <div className="grid w-full gap-2 lg:hidden">
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Kalender einblenden</p>

@@ -1,75 +1,58 @@
 import { useState } from "react";
-import { Bell, CalendarDays, Check, ChevronDown, Edit3, Plus } from "lucide-react";
-import type { GoogleTaskList } from "../types/google";
+import { Bell, CalendarDays, Check, ChevronDown, ChevronRight, Edit3 } from "lucide-react";
 import type { PlanningTask } from "../types/planning";
 
 interface TaskSectionProps {
   tasks: PlanningTask[];
-  taskLists: GoogleTaskList[];
   activeTaskListId: string | null;
   isReadOnly: boolean;
-  onAddTask: () => void;
   onEditTask: (task: PlanningTask) => void;
   onToggleTask: (task: PlanningTask) => void;
   onTaskDragStart: (task: PlanningTask) => void;
   onTaskDragEnd: () => void;
-  onTaskListChange: (taskListId: string) => void;
+  onOpenSidebar: () => void;
 }
 
 export function TaskSection({
   tasks,
-  taskLists,
   activeTaskListId,
   isReadOnly,
-  onAddTask,
   onEditTask,
   onToggleTask,
   onTaskDragStart,
   onTaskDragEnd,
-  onTaskListChange
+  onOpenSidebar
 }: TaskSectionProps) {
   const [showCompleted, setShowCompleted] = useState(false);
-  const selectedTaskListId = activeTaskListId ?? taskLists[0]?.id ?? "";
+  const selectedTaskListId = activeTaskListId ?? "";
   const visibleTasks = selectedTaskListId ? tasks.filter((task) => task.taskListId === selectedTaskListId) : tasks;
   const openTasks = visibleTasks.filter((task) => task.status !== "completed");
   const completedTasks = visibleTasks.filter((task) => task.status === "completed");
-  const selectedListTitle = taskLists.find((list) => list.id === selectedTaskListId)?.title ?? "Alle Aufgaben";
+  const selectedListTitle = visibleTasks[0]?.taskListTitle ?? "Aufgaben";
+
   return (
-    <div className="thin-scrollbar h-full overflow-y-auto bg-background pb-20 lg:pb-0">
+    <div className="thin-scrollbar h-full overflow-y-auto bg-background pb-[9.5rem] lg:pb-0">
       <section className="flex min-h-0 flex-col bg-white">
         <div className="border-b border-line px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-sm font-semibold uppercase tracking-[0.08em] text-primary-dark">My Day</p>
-              <h2 className="mt-1 truncate text-2xl font-semibold leading-8 text-ink sm:text-[28px] sm:leading-9">
-                {selectedListTitle}
-              </h2>
-              <p className="mt-1 text-sm text-muted">
-                {openTasks.length} offen, {completedTasks.length} erledigt
-              </p>
-            </div>
-            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-              <select
-                value={selectedTaskListId}
-                onChange={(event) => onTaskListChange(event.target.value)}
-                className="h-10 min-w-0 flex-1 rounded-lg border border-outline-soft bg-white px-3 text-sm font-medium sm:flex-none"
-                aria-label="Google-Taskliste auswählen"
-              >
-                {taskLists.map((list) => (
-                  <option key={list.id} value={list.id}>
-                    {list.title}
-                  </option>
-                ))}
-              </select>
+            <div className="flex min-w-0 items-start gap-3">
               <button
                 type="button"
-                onClick={onAddTask}
-                disabled={isReadOnly}
-                className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-primary-dark px-4 font-medium text-white shadow-sm hover:bg-primary-blue disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+                onClick={onOpenSidebar}
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-outline-soft bg-white text-primary-dark hover:bg-surface-low lg:hidden"
+                aria-label="Seitenleiste öffnen"
               >
-                <Plus className="h-4 w-4" />
-                Task hinzufügen
+                <ChevronRight className="h-5 w-5" />
               </button>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold uppercase tracking-[0.08em] text-primary-dark">My Day</p>
+                <h2 className="mt-1 truncate text-2xl font-semibold leading-8 text-ink sm:text-[28px] sm:leading-9">
+                  {selectedListTitle}
+                </h2>
+                <p className="mt-1 text-sm text-muted">
+                  {openTasks.length} offen, {completedTasks.length} erledigt
+                </p>
+              </div>
             </div>
           </div>
         </div>

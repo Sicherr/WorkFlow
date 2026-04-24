@@ -68,8 +68,10 @@ describe("App offline cache mode", () => {
     renderApp();
 
     expect(screen.getByText("Offline Aufgabe")).toBeInTheDocument();
-    expect(screen.getByText(/Offline:/)).toBeInTheDocument();
+    expect(screen.getByText("Offline-Modus")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Offline-Hinweis schlie/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Aufgabe abhaken" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Task hinzufügen" })).toBeDisabled();
   });
 });
+
+

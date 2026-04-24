@@ -17,6 +17,9 @@ interface SidebarProps {
   onTaskDropToList: (taskListId: string) => void;
   onCalendarVisibilityChange: (calendarId: string) => void;
   onAddTask: () => void;
+  className?: string;
+  mobile?: boolean;
+  onRequestClose?: () => void;
 }
 
 export function Sidebar({
@@ -31,7 +34,10 @@ export function Sidebar({
   onTaskListChange,
   onTaskDropToList,
   onCalendarVisibilityChange,
-  onAddTask
+  onAddTask,
+  className,
+  mobile = false,
+  onRequestClose
 }: SidebarProps) {
   const selectedTaskListId = activeTaskListId ?? taskLists[0]?.id ?? "";
   const activeCalendarIds = visibleCalendarIds ?? calendars.map((calendar) => calendar.id);
@@ -45,7 +51,9 @@ export function Sidebar({
   };
 
   return (
-    <aside className="hidden w-[280px] shrink-0 flex-col border-r border-line bg-[#F3F2F1] lg:flex">
+    <aside
+      className={`${mobile ? "flex h-full w-full flex-col" : "hidden w-[280px] shrink-0 flex-col lg:flex"} border-r border-line bg-[#F3F2F1] ${className ?? ""}`}
+    >
       <div className="border-b border-line px-4 py-5">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-dark text-white shadow-sm">
@@ -63,19 +71,28 @@ export function Sidebar({
           active={activeTab === "tasks"}
           icon={<Sun className="h-5 w-5" />}
           label="My Day"
-          onClick={() => onTabChange("tasks")}
+          onClick={() => {
+            onTabChange("tasks");
+            onRequestClose?.();
+          }}
         />
         <SidebarButton
           active={activeTab === "calendar"}
           icon={<CalendarDays className="h-5 w-5" />}
           label="Calendar"
-          onClick={() => onTabChange("calendar")}
+          onClick={() => {
+            onTabChange("calendar");
+            onRequestClose?.();
+          }}
         />
         <SidebarButton
           active={activeTab === "settings"}
           icon={<Settings className="h-5 w-5" />}
           label="Settings"
-          onClick={() => onTabChange("settings")}
+          onClick={() => {
+            onTabChange("settings");
+            onRequestClose?.();
+          }}
         />
 
         {activeTab === "tasks" && (
@@ -99,6 +116,7 @@ export function Sidebar({
                   onClick={() => {
                     onTaskListChange(list.id);
                     onTabChange("tasks");
+                    onRequestClose?.();
                   }}
                   className={`flex items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition ${getTaskListClassName(list.id)}`}
                 >
@@ -141,7 +159,10 @@ export function Sidebar({
         <div className="border-t border-line p-2">
           <button
             type="button"
-            onClick={onAddTask}
+            onClick={() => {
+              onAddTask();
+              onRequestClose?.();
+            }}
             disabled={isReadOnly}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-ink hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
           >

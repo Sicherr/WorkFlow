@@ -1,15 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type TouchEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, X } from "lucide-react";
 import { CalendarSection, type CalendarEventMove } from "./components/CalendarSection";
 import { EventForm, TaskForm } from "./components/EntryForms";
 import { LoginScreen } from "./components/LoginScreen";
+import { MobileTaskQuickAdd } from "./components/MobileTaskQuickAdd";
 import { Modal } from "./components/Modal";
 import { MobileNav } from "./components/MobileNav";
 import { SettingsPage } from "./components/SettingsPage";
 import { Sidebar } from "./components/Sidebar";
 import { TaskSection } from "./components/TaskSection";
-import { Toolbar } from "./components/Toolbar";
 import { useGoogleSession } from "./hooks/useGoogleSession";
 import { createEvent, createTask, GoogleApiError, loadPlanningData, moveTaskToList, updateEvent, updateTask } from "./lib/googleApi";
 import { dateKeyToDate, dateTimeFromInputs, makeTaskDueIso, toDateKey } from "./lib/dates";
@@ -56,6 +56,10 @@ export default function App() {
   const [offlineSnapshot, setOfflineSnapshot] = useState<OfflinePlanningSnapshot | null>(
     () => loadPlanningSnapshot(selectedWeekKey) ?? loadLastPlanningSnapshot()
   );
+  const [isOfflineNoticeDismissed, setIsOfflineNoticeDismissed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const contentTouchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const sidebarTouchStartRef = useRef<{ x: number; y: number } | null>(null);
   const activeQueryKey = queryKey(session.accessToken, weekStart);
 
   const planningQuery = useQuery({
@@ -262,6 +266,11 @@ export default function App() {
   const displayWeekStart = planningQuery.data ? weekStart : cachedWeekStart;
   const isReadOnlyOffline = Boolean(data && !planningQuery.data);
   const canWrite = Boolean(session.accessToken && !isReadOnlyOffline);
+  const selectedTaskList = data?.taskLists.find((list) => list.id === activeTaskListId) ?? data?.taskLists[0] ?? null;
+
+  useEffect(() => {
+    setIsOfflineNoticeDismissed(false);
+  }, [offlineSnapshot?.savedAt, isReadOnlyOffline]);
 
   useEffect(() => {
     if (isReadOnlyOffline) {
@@ -269,6 +278,21 @@ export default function App() {
       setDraggedTask(null);
     }
   }, [isReadOnlyOffline]);
+
+  useEffect(() => {
+    if (activeTab === "settings") {
+      setIsMobileSidebarOpen(false);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) setIsMobileSidebarOpen(false);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const handleSignOut = async () => {
     clearPlanningSnapshots();
@@ -289,6 +313,50 @@ export default function App() {
 
   const activeCalendarIds = visibleCalendarIds ?? data?.calendars.map((calendar) => calendar.id) ?? [];
   const visibleEvents = data?.events.filter((event) => activeCalendarIds.includes(event.calendarId)) ?? [];
+  const showMobileSidebarControls = activeTab === "tasks" || activeTab === "calendar";
+  const showMobileQuickAdd = activeTab === "tasks" && Boolean(data) && !isMobileSidebarOpen;
+
+  const canUseMobileSidebar = () => showMobileSidebarControls && window.innerWidth < 1024;
+
+  const handleContentTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    if (!canUseMobileSidebar() || isMobileSidebarOpen) return;
+
+    const touch = event.touches[0];
+    if (touch.clientX > 28) return;
+    contentTouchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleContentTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const start = contentTouchStartRef.current;
+    contentTouchStartRef.current = null;
+
+    if (!start || !canUseMobileSidebar() || isMobileSidebarOpen) return;
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - start.x;
+    const deltaY = Math.abs(touch.clientY - start.y);
+    if (deltaX > 70 && deltaY < 60) setIsMobileSidebarOpen(true);
+  };
+
+  const handleSidebarTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    if (!canUseMobileSidebar()) return;
+
+    const touch = event.touches[0];
+    sidebarTouchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleSidebarTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const start = sidebarTouchStartRef.current;
+    sidebarTouchStartRef.current = null;
+
+    if (!start || !canUseMobileSidebar()) return;
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - start.x;
+    const deltaY = Math.abs(touch.clientY - start.y);
+    if (deltaX < -70 && deltaY < 60) setIsMobileSidebarOpen(false);
+  };
+
   const handleTaskDropToList = (taskListId: string) => {
     if (!canWrite || !draggedTask || draggedTask.taskListId === taskListId) {
       setDraggedTask(null);
@@ -309,18 +377,13 @@ export default function App() {
 
   return (
     <main className="flex h-dvh flex-col bg-background text-ink">
-      <Toolbar
-        activeTab={activeTab}
-        weekStart={displayWeekStart}
-        isFetching={planningQuery.isFetching || isBusy}
-        onPreviousWeek={previousWeek}
-        onNextWeek={nextWeek}
-        onToday={goToToday}
-        onRefresh={() => (session.accessToken ? planningQuery.refetch() : session.signIn("consent"))}
-        onSignOut={handleSignOut}
-      />
-
-      {isReadOnlyOffline && offlineSnapshot && <OfflineBanner snapshot={offlineSnapshot} hasSession={Boolean(session.accessToken)} />}
+      {isReadOnlyOffline && offlineSnapshot && !isOfflineNoticeDismissed && (
+        <OfflineBanner
+          snapshot={offlineSnapshot}
+          hasSession={Boolean(session.accessToken)}
+          onDismiss={() => setIsOfflineNoticeDismissed(true)}
+        />
+      )}
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <Sidebar
@@ -339,18 +402,54 @@ export default function App() {
             if (canWrite) setModal({ kind: "create-task" });
           }}
         />
-        <div className="min-w-0 flex-1">
+        {showMobileSidebarControls && (
+          <>
+            <button
+              type="button"
+              aria-label="Navigation schliessen"
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className={`fixed inset-0 z-40 bg-ink/35 transition-opacity duration-200 lg:hidden ${
+                isMobileSidebarOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
+              }`}
+            />
+            <div
+              className={`fixed inset-y-0 left-0 z-50 w-[300px] max-w-[85vw] transform transition-transform duration-200 ease-out lg:hidden ${
+                isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+              }`}
+              onTouchStart={handleSidebarTouchStart}
+              onTouchEnd={handleSidebarTouchEnd}
+            >
+              <Sidebar
+                activeTab={activeTab}
+                taskLists={data?.taskLists ?? []}
+                calendars={data?.calendars ?? []}
+                activeTaskListId={activeTaskListId}
+                draggedTask={canWrite ? draggedTask : null}
+                isReadOnly={isReadOnlyOffline}
+                visibleCalendarIds={visibleCalendarIds}
+                onTabChange={setActiveTab}
+                onTaskListChange={setActiveTaskListId}
+                onTaskDropToList={handleTaskDropToList}
+                onCalendarVisibilityChange={toggleCalendarVisibility}
+                onAddTask={() => {
+                  if (canWrite) setModal({ kind: "create-task" });
+                }}
+                mobile
+                onRequestClose={() => setIsMobileSidebarOpen(false)}
+                className="shadow-floating"
+              />
+            </div>
+          </>
+        )}
+        <div className="min-w-0 flex-1" onTouchStart={handleContentTouchStart} onTouchEnd={handleContentTouchEnd}>
           {planningQuery.isLoading && !data && <LoadingState />}
           {planningQuery.isError && !data && <ErrorState error={planningQuery.error} onRetry={() => planningQuery.refetch()} />}
           {data && activeTab === "tasks" && (
             <TaskSection
               tasks={data.tasks}
-              taskLists={data.taskLists}
               activeTaskListId={activeTaskListId}
               isReadOnly={isReadOnlyOffline}
-              onAddTask={() => {
-                if (canWrite) setModal({ kind: "create-task" });
-              }}
+              onOpenSidebar={() => setIsMobileSidebarOpen(true)}
               onEditTask={(task) => {
                 if (canWrite) setModal({ kind: "edit-task", task });
               }}
@@ -361,7 +460,6 @@ export default function App() {
                 if (canWrite) setDraggedTask(task);
               }}
               onTaskDragEnd={() => window.setTimeout(() => setDraggedTask(null), 0)}
-              onTaskListChange={setActiveTaskListId}
             />
           )}
           {data && activeTab === "calendar" && (
@@ -373,6 +471,9 @@ export default function App() {
               totalEventCount={data.events.length}
               visibleCalendarCount={activeCalendarIds.length}
               calendarCount={data.calendars.length}
+              onPreviousWeek={previousWeek}
+              onNextWeek={nextWeek}
+              onToday={goToToday}
               onShowAllCalendars={() => setVisibleCalendarIds(data.calendars.map((calendar) => calendar.id))}
               onCalendarVisibilityChange={toggleCalendarVisibility}
               isReadOnly={isReadOnlyOffline}
@@ -385,6 +486,7 @@ export default function App() {
               onMoveEvent={(event, move) => {
                 if (canWrite) moveEventMutation.mutate({ event, move });
               }}
+              onOpenSidebar={() => setIsMobileSidebarOpen(true)}
             />
           )}
           {data && activeTab === "settings" && (
@@ -400,6 +502,21 @@ export default function App() {
         </div>
       </div>
       <MobileNav activeTab={activeTab} onTabChange={setActiveTab} />
+      {showMobileQuickAdd && selectedTaskList && (
+        <MobileTaskQuickAdd
+          listTitle={selectedTaskList.title}
+          disabled={!canWrite}
+          isBusy={createTaskMutation.isPending}
+          onSubmit={(title) =>
+            createTaskMutation.mutate({
+              title,
+              notes: "",
+              dueDate: "",
+              taskListId: selectedTaskList.id
+            })
+          }
+        />
+      )}
       {data && modal?.kind === "create-task" && (
         <Modal title="Task hinzufügen" onClose={() => setModal(null)}>
           <TaskForm
@@ -515,22 +632,47 @@ function replaceEvent(data: PlanningData, id: string, patch: Partial<PlanningEve
   return { ...data, events, items: sortPlanningItems([...data.tasks, ...events]) };
 }
 
-function OfflineBanner({ snapshot, hasSession }: { snapshot: OfflinePlanningSnapshot; hasSession: boolean }) {
+function OfflineBanner({
+  snapshot,
+  hasSession,
+  onDismiss
+}: {
+  snapshot: OfflinePlanningSnapshot;
+  hasSession: boolean;
+  onDismiss: () => void;
+}) {
   const savedAt = new Intl.DateTimeFormat("de-DE", {
     dateStyle: "medium",
     timeStyle: "short"
   }).format(new Date(snapshot.savedAt));
 
   return (
-    <section className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-950">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2">
-        <p>
-          <span className="font-semibold">Offline:</span> letzte Synchronisation {savedAt}. Die gespeicherten Daten sind
-          schreibgeschÃ¼tzt.
-        </p>
-        <p className="text-xs font-medium uppercase tracking-[0.08em] text-amber-800">
-          {hasSession ? "Sync erneut versuchen" : "FÃ¼r Sync wieder mit Google verbinden"}
-        </p>
+    <section className="pointer-events-none fixed inset-x-4 top-4 z-50 flex justify-end sm:left-auto sm:right-4">
+      <div className="pointer-events-auto w-full max-w-sm rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950 shadow-floating">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 rounded-full bg-amber-100 p-2 text-amber-800">
+            <AlertCircle className="h-4 w-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-3">
+              <p className="font-semibold">Offline-Modus</p>
+              <button
+                type="button"
+                onClick={onDismiss}
+                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-amber-800 hover:bg-amber-100"
+                aria-label="Offline-Hinweis schlie�en"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="mt-1 leading-6">
+              Letzte Synchronisation {savedAt}. Die gespeicherten Daten sind schreibgesch�tzt.
+            </p>
+            <p className="mt-2 text-xs font-medium uppercase tracking-[0.08em] text-amber-800">
+              {hasSession ? "Sync erneut versuchen" : "F�r Sync wieder mit Google verbinden"}
+            </p>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -566,3 +708,6 @@ function ErrorState({ error, onRetry }: { error: Error | null; onRetry: () => vo
     </section>
   );
 }
+
+
+
