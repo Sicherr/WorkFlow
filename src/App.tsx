@@ -48,7 +48,7 @@ export default function App() {
   const [modal, setModal] = useState<
     | { kind: "create-task" }
     | { kind: "edit-task"; task: PlanningTask }
-    | { kind: "create-event" }
+    | { kind: "create-event"; initialDraft?: Partial<EventDraft> }
     | { kind: "edit-event"; event: PlanningEvent }
     | null
   >(null);
@@ -280,12 +280,6 @@ export default function App() {
   }, [isReadOnlyOffline]);
 
   useEffect(() => {
-    if (activeTab === "settings") {
-      setIsMobileSidebarOpen(false);
-    }
-  }, [activeTab]);
-
-  useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) setIsMobileSidebarOpen(false);
     };
@@ -313,7 +307,7 @@ export default function App() {
 
   const activeCalendarIds = visibleCalendarIds ?? data?.calendars.map((calendar) => calendar.id) ?? [];
   const visibleEvents = data?.events.filter((event) => activeCalendarIds.includes(event.calendarId)) ?? [];
-  const showMobileSidebarControls = activeTab === "tasks" || activeTab === "calendar";
+  const showMobileSidebarControls = activeTab === "tasks" || activeTab === "calendar" || activeTab === "settings";
   const showMobileQuickAdd = activeTab === "tasks" && Boolean(data) && !isMobileSidebarOpen;
 
   const canUseMobileSidebar = () => showMobileSidebarControls && window.innerWidth < 1024;
@@ -397,6 +391,7 @@ export default function App() {
           onTabChange={setActiveTab}
           onTaskListChange={setActiveTaskListId}
           onTaskDropToList={handleTaskDropToList}
+          onShowAllCalendars={() => setVisibleCalendarIds((data?.calendars ?? []).map((calendar) => calendar.id))}
           onCalendarVisibilityChange={toggleCalendarVisibility}
           onAddTask={() => {
             if (canWrite) setModal({ kind: "create-task" });
@@ -430,6 +425,7 @@ export default function App() {
                 onTabChange={setActiveTab}
                 onTaskListChange={setActiveTaskListId}
                 onTaskDropToList={handleTaskDropToList}
+                onShowAllCalendars={() => setVisibleCalendarIds((data?.calendars ?? []).map((calendar) => calendar.id))}
                 onCalendarVisibilityChange={toggleCalendarVisibility}
                 onAddTask={() => {
                   if (canWrite) setModal({ kind: "create-task" });
@@ -480,6 +476,9 @@ export default function App() {
               onAddEvent={() => {
                 if (canWrite) setModal({ kind: "create-event" });
               }}
+              onCreateEventAt={(draft) => {
+                if (canWrite) setModal({ kind: "create-event", initialDraft: draft });
+              }}
               onEditEvent={(event) => {
                 if (canWrite) setModal({ kind: "edit-event", event });
               }}
@@ -497,6 +496,7 @@ export default function App() {
               clientIdConfigured={session.clientIdConfigured}
               onRefresh={() => (session.accessToken ? planningQuery.refetch() : session.signIn("consent"))}
               onSignOut={handleSignOut}
+              onOpenSidebar={() => setIsMobileSidebarOpen(true)}
             />
           )}
         </div>

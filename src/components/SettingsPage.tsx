@@ -1,4 +1,4 @@
-import { CheckCircle2, Database, KeyRound, ListTodo, Palette, RefreshCw, ShieldCheck } from "lucide-react";
+import { CheckCircle2, ChevronRight, Database, KeyRound, ListTodo, Palette, RefreshCw, ShieldCheck } from "lucide-react";
 import type { ReactNode } from "react";
 import type { GoogleCalendarListEntry, GoogleTaskList } from "../types/google";
 
@@ -9,6 +9,7 @@ interface SettingsPageProps {
   clientIdConfigured: boolean;
   onRefresh: () => void;
   onSignOut: () => void;
+  onOpenSidebar: () => void;
 }
 
 export function SettingsPage({
@@ -17,18 +18,29 @@ export function SettingsPage({
   isSyncing,
   clientIdConfigured,
   onRefresh,
-  onSignOut
+  onSignOut,
+  onOpenSidebar
 }: SettingsPageProps) {
   return (
     <section className="thin-scrollbar h-full overflow-y-auto bg-background pb-20 lg:pb-0">
       <div className="mx-auto grid max-w-5xl gap-6 px-4 py-6 sm:px-6 sm:py-8">
-        <header>
-          <p className="text-sm font-semibold uppercase tracking-[0.08em] text-primary-dark">Settings</p>
-          <h2 className="mt-2 text-2xl font-semibold leading-8 text-ink sm:text-[28px] sm:leading-9">App & Google Sync</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-            Verwalte Verbindung, Synchronisation und lokale App-Einstellungen. Diese Seite speichert keine Google
-            Secrets im Browser.
-          </p>
+        <header className="flex items-start gap-3">
+          <button
+            type="button"
+            onClick={onOpenSidebar}
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-outline-soft bg-white text-primary-dark hover:bg-surface-low lg:hidden"
+            aria-label="Navigation oeffnen"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.08em] text-primary-dark">Settings</p>
+            <h2 className="mt-2 text-2xl font-semibold leading-8 text-ink sm:text-[28px] sm:leading-9">App & Google Sync</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+              Verwalte Verbindung, Synchronisation und lokale App-Einstellungen. Diese Seite speichert keine Google
+              Secrets im Browser.
+            </p>
+          </div>
         </header>
 
         <div className="grid gap-4 md:grid-cols-2">

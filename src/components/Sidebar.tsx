@@ -15,6 +15,7 @@ interface SidebarProps {
   onTabChange: (tab: AppTab) => void;
   onTaskListChange: (taskListId: string) => void;
   onTaskDropToList: (taskListId: string) => void;
+  onShowAllCalendars: () => void;
   onCalendarVisibilityChange: (calendarId: string) => void;
   onAddTask: () => void;
   className?: string;
@@ -33,6 +34,7 @@ export function Sidebar({
   onTabChange,
   onTaskListChange,
   onTaskDropToList,
+  onShowAllCalendars,
   onCalendarVisibilityChange,
   onAddTask,
   className,
@@ -132,6 +134,16 @@ export function Sidebar({
           <div className="mt-6 border-t border-line px-3 pt-4">
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">My Calendars</p>
             <div className="grid gap-1">
+              <button
+                type="button"
+                onClick={onShowAllCalendars}
+                className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition ${
+                  activeCalendarIds.length === calendars.length ? "bg-white font-semibold text-primary-dark shadow-sm" : "text-ink hover:bg-white/70"
+                }`}
+              >
+                <span className="flex h-4 w-4 items-center justify-center rounded-full border border-outline-soft text-[10px]">A</span>
+                <span className="truncate">Alle</span>
+              </button>
               {calendars.slice(0, 8).map((calendar) => (
                 <label
                   key={calendar.id}

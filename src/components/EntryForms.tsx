@@ -104,6 +104,7 @@ export function TaskForm({
 export function EventForm({
   event,
   calendars,
+  initialDraft,
   isBusy,
   submitLabel,
   onCancel,
@@ -111,22 +112,36 @@ export function EventForm({
 }: FormActions & {
   event?: PlanningEvent;
   calendars: GoogleCalendarListEntry[];
+  initialDraft?: Partial<EventDraft>;
   onSubmit: (draft: EventDraft | { title: string; description: string; location: string; date: string; startTime: string; endTime: string }) => void;
 }) {
   const writableCalendars = useMemo(() => calendars.filter(canEditCalendar), [calendars]);
   const [draft, setDraft] = useState<EventDraft>({
-    title: event?.title ?? "",
-    description: event?.description ?? "",
-    location: event?.location ?? "",
-    date: event?.date ?? toDateKey(new Date()),
-    startTime: event ? (event.allDay ? "09:00" : timeInputFromIso(event.start)) : "09:00",
-    endTime: event ? (event.allDay ? "10:00" : timeInputFromIso(event.end)) : "10:00",
-    calendarId: event?.calendarId ?? ""
+    title: event?.title ?? initialDraft?.title ?? "",
+    description: event?.description ?? initialDraft?.description ?? "",
+    location: event?.location ?? initialDraft?.location ?? "",
+    date: event?.date ?? initialDraft?.date ?? toDateKey(new Date()),
+    startTime: event ? (event.allDay ? "09:00" : timeInputFromIso(event.start)) : (initialDraft?.startTime ?? "09:00"),
+    endTime: event ? (event.allDay ? "10:00" : timeInputFromIso(event.end)) : (initialDraft?.endTime ?? "10:00"),
+    calendarId: event?.calendarId ?? initialDraft?.calendarId ?? ""
   });
 
   useEffect(() => {
     setDraft((current) => ({ ...current, calendarId: current.calendarId || writableCalendars[0]?.id || "" }));
   }, [writableCalendars]);
+
+  useEffect(() => {
+    if (event) return;
+    setDraft({
+      title: initialDraft?.title ?? "",
+      description: initialDraft?.description ?? "",
+      location: initialDraft?.location ?? "",
+      date: initialDraft?.date ?? toDateKey(new Date()),
+      startTime: initialDraft?.startTime ?? "09:00",
+      endTime: initialDraft?.endTime ?? "10:00",
+      calendarId: initialDraft?.calendarId ?? writableCalendars[0]?.id ?? ""
+    });
+  }, [event, initialDraft, writableCalendars]);
 
   function submit(formEvent: FormEvent) {
     formEvent.preventDefault();
